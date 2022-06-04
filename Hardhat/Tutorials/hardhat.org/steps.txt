@@ -1,0 +1,5 @@
+npm init --yes
+npm install --save-dev hardhat
+npx hardhat
+
+npm install --save-dev @nomiclabs/hardhat-ethers ethers @nomiclabs/hardhat-waffle ethereum-waffle chai
