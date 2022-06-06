@@ -1,4 +1,13 @@
 .env
+.env.test
+
 node_modules/
+
 artifacts/
+
 cache/
+
+dist/
+
+tmp/
+temp/
