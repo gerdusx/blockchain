@@ -41,6 +41,13 @@ describe("Lottery", () => {
             expect(await lotteryContract.getBalance()).to.equal(ethers.utils.parseEther("0.1"));
         });
 
+        it("Manager not allowed to enter the lottery", async () => {
+            await expect(owner.sendTransaction({
+                to: lotteryContract.address,
+                value: ethers.utils.parseEther("0.1")
+            })).to.be.revertedWith("Manager not allowed to enter");
+        });
+
         it("Should only accept 0.1 ether as entry", async () => {
             await expect(addr1.sendTransaction({
                 to: lotteryContract.address,
