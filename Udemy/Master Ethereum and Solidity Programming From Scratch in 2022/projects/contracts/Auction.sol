@@ -32,6 +32,11 @@ contract Auction {
         _;
     }
 
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+
     modifier afterStart() {
         require(block.number >= startBlock);
         _;
@@ -42,11 +47,65 @@ contract Auction {
         _;
     }
 
+    function min(uint a, uint b) pure internal returns(uint) {
+        if (a < b) {
+            return a;
+        }
+
+        return b;
+    }
+
+    function cancelAuction() public onlyOwner {
+        auctionState = State.Cancelled;
+    }
+
     function placebBid() public notOwner afterStart beforeEnd payable{
         require(auctionState == State.Running);
         require(msg.value >= 100);
 
         uint currentBid = bids[msg.sender] + msg.value;
+        require (currentBid > highestBindingBid);
+
+        bids[msg.sender] = currentBid;
+
+        if (currentBid <= bids[highestBidder]) {
+            highestBindingBid = min(currentBid + bidIncrement, bids[highestBidder]);
+        } 
+        else {
+            highestBindingBid = min(currentBid, bids[highestBidder] + bidIncrement);
+            highestBidder = payable(msg.sender);
+        }
+    }
+
+    function finalizeAuction() public {
+        require(auctionState == State.Cancelled || block.number > endBlock);
+        require(msg.sender == owner || bids[msg.sender] > 0); //The owner or any bidder can finalize the auction
+
+        address payable recipient;
+        uint value;
+
+        if (auctionState == State.Cancelled) {
+            recipient = payable(msg.sender);
+            value = bids[msg.sender];
+        }
+        else {
+            if (msg.sender == owner) {
+                recipient = owner;
+                value = bids[msg.sender];
+            } else {
+                if (msg.sender == highestBidder) {
+                    recipient = highestBidder;
+                    value = bids[highestBidder] - highestBindingBid;
+                }
+                else {
+                    recipient = payable(msg.sender);
+                    value = bids[msg.sender];
+                }
+            }
+        }
+
+        bids[recipient] = 0;
+        recipient.transfer(value);
     }
 
 }
