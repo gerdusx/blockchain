@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity 0.8.14;
+pragma solidity ^0.8.14;
 
 contract CrowdFunding {
     mapping(address => uint) public contributors;
@@ -35,6 +35,17 @@ contract CrowdFunding {
 
     function getBalance() public view returns(uint) {
         return address(this).balance;
+    }
+
+    function getRefund() public {
+        require(block.timestamp > deadline && raisedAmount < goal);
+        require(contributors[msg.sender] > 0);
+        
+        address payable recipient = payable(msg.sender);
+        uint value = contributors[msg.sender];
+
+        recipient.transfer(value);
+        contributors[msg.sender] = 0;
     }
 
 }
