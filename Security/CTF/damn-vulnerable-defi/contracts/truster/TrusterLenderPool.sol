@@ -20,15 +20,7 @@ contract TrusterLenderPool is ReentrancyGuard {
         damnValuableToken = IERC20(tokenAddress);
     }
 
-    function flashLoan(
-        uint256 borrowAmount,
-        address borrower,
-        address target,
-        bytes calldata data
-    )
-        external
-        nonReentrant
-    {
+    function flashLoan(uint256 borrowAmount, address borrower, address target, bytes calldata data) external nonReentrant {
         uint256 balanceBefore = damnValuableToken.balanceOf(address(this));
         require(balanceBefore >= borrowAmount, "Not enough tokens in pool");
         
