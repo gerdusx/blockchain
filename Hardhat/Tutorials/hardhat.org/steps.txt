@@ -2,4 +2,8 @@ npm init --yes
 npm install --save-dev hardhat
 npx hardhat
 
+create tsconfig.json
+
 npm install --save-dev @nomiclabs/hardhat-ethers ethers @nomiclabs/hardhat-waffle ethereum-waffle chai
+npm install --save-dev ts-node typescript @types/chai @types/mocha @types/node @typescript-eslint/eslint-plugin @typescript-eslint/parser dotenv
+npm install --save @openzeppelin/contracts @openzeppelin/contracts-upgradeable
