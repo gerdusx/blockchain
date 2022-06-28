@@ -13,3 +13,6 @@ tmp/
 temp/
 
 Private
+
+*.bin
+*.abi
