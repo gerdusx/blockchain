@@ -16,3 +16,5 @@ Private
 
 *.bin
 *.abi
+
+.encryptedKey.json
