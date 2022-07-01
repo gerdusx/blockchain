@@ -1,1 +1,1 @@
-# Ethers SImple Storage
+# Ethers Simple Storage
