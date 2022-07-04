@@ -1,5 +1,5 @@
-const {ethers, run, network} = require("hardhat");
-require("dotenv").config();
+import { ethers, run, network  } from "hardhat";
+import "dotenv/config";
 
 async function main() {
   const simpleStorageFactory = await ethers.getContractFactory("SimpleStorage");
@@ -24,7 +24,7 @@ async function main() {
   console.log(`Updated current value is ${updatedCurrentValue}`);
 }
 
-async function verify(contractAddress, args) {
+async function verify(contractAddress: string, args: any[]) {
   //0x039dE2e0955ae7b6dD7741Dd782088335c01BCe4
   console.log("Verifying contract...");
   try {
@@ -32,8 +32,8 @@ async function verify(contractAddress, args) {
       address: contractAddress,
       constructorArguments: args
     })
-  } catch (error) {
-    if (e.message.toLowerCase().includes("already verified")) {
+  } catch (error: any) {
+    if (error.message.toLowerCase().includes("already verified")) {
       console.log("Already verified");
     } else {
       console.log(error);

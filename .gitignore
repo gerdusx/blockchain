@@ -19,3 +19,8 @@ Private
 
 .encryptedKey.json
 gas-report.txt
+
+coverage
+coverage.json
+typechain
+typechain-types

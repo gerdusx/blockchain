@@ -1,18 +1,12 @@
-require("@nomiclabs/hardhat-waffle");
-require("dotenv").config();
+import "@nomiclabs/hardhat-waffle";
+import "dotenv/config";
 
-require("@nomiclabs/hardhat-etherscan");
+import "@nomiclabs/hardhat-etherscan";
 
-require("./tasks/block-number");
-require("hardhat-gas-reporter")
-
-// task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
-//   const accounts = await hre.ethers.getSigners();
-
-//   for (const account of accounts) {
-//     console.log(account.address);
-//   }
-// });
+import "./tasks/block-number";
+import "hardhat-gas-reporter";
+import "solidity-coverage"; //yarn hardhat coverage
+import "@typechain/hardhat"; //yarn hardhat typechain
 
 const RINKEBY_RPC_URL = process.env.RINKEBY_RPC_URL || "https://eth-rinkeby";
 const PRIVATE_KEY = process.env.PRIVATE_KEY || "0xkey";
