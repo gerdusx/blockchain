@@ -1,0 +1,2 @@
+Override @nomiclabs/hardhat-ethers with hardhat-deploy-ethers
+yarn add --dev @nomiclabs/hardhat-ethers@npm:hardhat-deploy-ethers ethers
