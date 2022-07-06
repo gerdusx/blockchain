@@ -25,7 +25,6 @@ async function main() {
 }
 
 async function verify(contractAddress: string, args: any[]) {
-  //0x039dE2e0955ae7b6dD7741Dd782088335c01BCe4
   console.log("Verifying contract...");
   try {
     await run("verify:verify", {
@@ -39,7 +38,6 @@ async function verify(contractAddress: string, args: any[]) {
       console.log(error);
     }
   }
-
 }
 
 // We recommend this pattern to be able to use async/await everywhere
