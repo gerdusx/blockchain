@@ -27,6 +27,7 @@ const config: HardhatUserConfig = {
         ],
     },
     defaultNetwork: "hardhat",
+
     networks: {
         localhost: {
             url: "http://127.0.0.1:8545",
@@ -35,12 +36,15 @@ const config: HardhatUserConfig = {
         rinkeby: {
             url: RINKEBY_RPC_URL,
             accounts: PRIVATE_KEY !== undefined ? [PRIVATE_KEY] : [],
-            chainId: 4,
+            chainId: 4
         },
     },
     gasReporter: {
         enabled: REPORT_GAS !== undefined,
+        outputFile: "gas-report.txt",
+        noColors: true,
         currency: "USD",
+        coinmarketcap: COINMARKETCAP_API_KEY,
     },
     etherscan: {
         apiKey: ETHERSCAN_API_KEY,
