@@ -1,143 +1,149 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { assert, expect } from "chai";
-import { deployments, ethers, getNamedAccounts } from "hardhat";
+import { deployments, ethers, network } from "hardhat";
 import { FundMe, MockV3Aggregator } from "../../typechain";
 
-describe("FundMe", async () => {
-    let fundMe: FundMe;
-    let mockV3Aggregator: MockV3Aggregator;
-    let deployer: SignerWithAddress;
+import { developmentChains } from "../../helper-hardhat-config";
 
-    const sendValue = ethers.utils.parseEther("1");
+const chainId = network.config.chainId || 0;
 
-    beforeEach(async () => {
-        const accounts = await ethers.getSigners();
-        // const accountZero = accounts[0];
-        deployer = accounts[0];
-        await deployments.fixture(["all"]);
-        fundMe = await ethers.getContract("FundMe", deployer);
-        mockV3Aggregator = await ethers.getContract("MockV3Aggregator", deployer);
-    });
+!developmentChains.includes(chainId)
+    ? describe.skip
+    : describe("FundMe", async () => {
+          let fundMe: FundMe;
+          let mockV3Aggregator: MockV3Aggregator;
+          let deployer: SignerWithAddress;
 
-    describe("constructor", async () => {
-        it("Set the aggregator addresses correctly", async () => {
-            const response = await fundMe.s_priceFeed();
-            assert.equal(response, mockV3Aggregator.address);
-        });
-    });
+          const sendValue = ethers.utils.parseEther("1");
 
-    describe("fund", async () => {
-        it("fails if you don't send enough ETH", async () => {
-            await expect(fundMe.fund()).to.be.revertedWith("You need to spend more ETH!");
-        });
+          beforeEach(async () => {
+              const accounts = await ethers.getSigners();
+              // const accountZero = accounts[0];
+              deployer = accounts[0];
+              await deployments.fixture(["all"]);
+              fundMe = await ethers.getContract("FundMe", deployer);
+              mockV3Aggregator = await ethers.getContract("MockV3Aggregator", deployer);
+          });
 
-        it("Updates the amount funded data structure", async () => {
-            await fundMe.fund({ value: sendValue });
-            const response = await fundMe.s_addressToAmountFunded(deployer.address);
-            assert.equal(response.toString(), sendValue.toString());
-        });
+          describe("constructor", async () => {
+              it("Set the aggregator addresses correctly", async () => {
+                  const response = await fundMe.getPriceFeed();
+                  assert.equal(response, mockV3Aggregator.address);
+              });
+          });
 
-        it("adds funder to array of funders", async () => {
-            await fundMe.fund({ value: sendValue });
-            const funder = await fundMe.s_funders(0);
-            assert.equal(funder, deployer.address);
-        });
-    });
+          describe("fund", async () => {
+              it("fails if you don't send enough ETH", async () => {
+                  await expect(fundMe.fund()).to.be.revertedWith("You need to spend more ETH!");
+              });
 
-    describe("withdraw", async () => {
-        beforeEach(async () => {
-            await fundMe.fund({ value: sendValue });
-        });
+              it("Updates the amount funded data structure", async () => {
+                  await fundMe.fund({ value: sendValue });
+                  const response = await fundMe.getAddressToAmountFunded(deployer.address);
+                  assert.equal(response.toString(), sendValue.toString());
+              });
 
-        it("withdraw ETH from a single funder", async () => {
-            const startingFundMeBalance = await fundMe.provider.getBalance(fundMe.address);
-            const startingDeployerBalance = await fundMe.provider.getBalance(deployer.address);
+              it("adds funder to array of funders", async () => {
+                  await fundMe.fund({ value: sendValue });
+                  const funder = await fundMe.getFunder(0);
+                  assert.equal(funder, deployer.address);
+              });
+          });
 
-            const transactionResponse = await fundMe.withdraw();
-            const transactionReceipt = await transactionResponse.wait(1);
+          describe("withdraw", async () => {
+              beforeEach(async () => {
+                  await fundMe.fund({ value: sendValue });
+              });
 
-            const { gasUsed, effectiveGasPrice } = transactionReceipt;
-            const gasCost = gasUsed.mul(effectiveGasPrice);
+              it("withdraw ETH from a single funder", async () => {
+                  const startingFundMeBalance = await fundMe.provider.getBalance(fundMe.address);
+                  const startingDeployerBalance = await fundMe.provider.getBalance(deployer.address);
 
-            const endingFundMeBalance = await fundMe.provider.getBalance(fundMe.address);
-            const endingDeployerBalance = await fundMe.provider.getBalance(deployer.address);
+                  const transactionResponse = await fundMe.withdraw();
+                  const transactionReceipt = await transactionResponse.wait(1);
 
-            assert.equal(endingFundMeBalance.toString(), "0");
-            assert.equal(startingDeployerBalance.add(startingFundMeBalance).toString(), endingDeployerBalance.add(gasCost).toString());
-        });
+                  const { gasUsed, effectiveGasPrice } = transactionReceipt;
+                  const gasCost = gasUsed.mul(effectiveGasPrice);
 
-        it("allows us to withdraw with multiple funders", async () => {
-            const accounts = await ethers.getSigners();
-            for (let index = 1; index < 6; index++) {
-                const fundMeConnectedContract = fundMe.connect(accounts[index]);
-                await fundMeConnectedContract.fund({ value: sendValue });
-            }
+                  const endingFundMeBalance = await fundMe.provider.getBalance(fundMe.address);
+                  const endingDeployerBalance = await fundMe.provider.getBalance(deployer.address);
 
-            await fundMe.fund({ value: sendValue });
+                  assert.equal(endingFundMeBalance.toString(), "0");
+                  assert.equal(startingDeployerBalance.add(startingFundMeBalance).toString(), endingDeployerBalance.add(gasCost).toString());
+              });
 
-            const startingFundMeBalance = await fundMe.provider.getBalance(fundMe.address);
-            const startingDeployerBalance = await fundMe.provider.getBalance(deployer.address);
+              it("allows us to withdraw with multiple funders", async () => {
+                  const accounts = await ethers.getSigners();
+                  for (let index = 1; index < 6; index++) {
+                      const fundMeConnectedContract = fundMe.connect(accounts[index]);
+                      await fundMeConnectedContract.fund({ value: sendValue });
+                  }
 
-            const transactionResponse = await fundMe.withdraw();
-            const transactionReceipt = await transactionResponse.wait(1);
+                  await fundMe.fund({ value: sendValue });
 
-            const { gasUsed, effectiveGasPrice } = transactionReceipt;
-            const gasCost = gasUsed.mul(effectiveGasPrice);
+                  const startingFundMeBalance = await fundMe.provider.getBalance(fundMe.address);
+                  const startingDeployerBalance = await fundMe.provider.getBalance(deployer.address);
 
-            const endingFundMeBalance = await fundMe.provider.getBalance(fundMe.address);
-            const endingDeployerBalance = await fundMe.provider.getBalance(deployer.address);
+                  const transactionResponse = await fundMe.withdraw();
+                  const transactionReceipt = await transactionResponse.wait(1);
 
-            assert.equal(endingFundMeBalance.toString(), "0");
-            assert.equal(startingDeployerBalance.add(startingFundMeBalance).toString(), endingDeployerBalance.add(gasCost).toString());
+                  const { gasUsed, effectiveGasPrice } = transactionReceipt;
+                  const gasCost = gasUsed.mul(effectiveGasPrice);
 
-            //Make sure the funders are reset properly
-            await expect(fundMe.s_funders(0)).to.be.reverted;
+                  const endingFundMeBalance = await fundMe.provider.getBalance(fundMe.address);
+                  const endingDeployerBalance = await fundMe.provider.getBalance(deployer.address);
 
-            for (let index = 1; index < 6; index++) {
-                const funderBalance = await fundMe.s_addressToAmountFunded(accounts[index].address);
-                assert.equal(funderBalance.toString(), "0");
-            }
-        });
+                  assert.equal(endingFundMeBalance.toString(), "0");
+                  assert.equal(startingDeployerBalance.add(startingFundMeBalance).toString(), endingDeployerBalance.add(gasCost).toString());
 
-        it("cheaperWithdraw....", async () => {
-            const accounts = await ethers.getSigners();
-            for (let index = 1; index < 6; index++) {
-                const fundMeConnectedContract = fundMe.connect(accounts[index]);
-                await fundMeConnectedContract.fund({ value: sendValue });
-            }
+                  //Make sure the funders are reset properly
+                  await expect(fundMe.getFunder(0)).to.be.reverted;
 
-            await fundMe.fund({ value: sendValue });
+                  for (let index = 1; index < 6; index++) {
+                      const funderBalance = await fundMe.getAddressToAmountFunded(accounts[index].address);
+                      assert.equal(funderBalance.toString(), "0");
+                  }
+              });
 
-            const startingFundMeBalance = await fundMe.provider.getBalance(fundMe.address);
-            const startingDeployerBalance = await fundMe.provider.getBalance(deployer.address);
+              it("cheaperWithdraw....", async () => {
+                  const accounts = await ethers.getSigners();
+                  for (let index = 1; index < 6; index++) {
+                      const fundMeConnectedContract = fundMe.connect(accounts[index]);
+                      await fundMeConnectedContract.fund({ value: sendValue });
+                  }
 
-            const transactionResponse = await fundMe.cheaperWithdraw();
-            const transactionReceipt = await transactionResponse.wait(1);
+                  await fundMe.fund({ value: sendValue });
 
-            const { gasUsed, effectiveGasPrice } = transactionReceipt;
-            const gasCost = gasUsed.mul(effectiveGasPrice);
+                  const startingFundMeBalance = await fundMe.provider.getBalance(fundMe.address);
+                  const startingDeployerBalance = await fundMe.provider.getBalance(deployer.address);
 
-            const endingFundMeBalance = await fundMe.provider.getBalance(fundMe.address);
-            const endingDeployerBalance = await fundMe.provider.getBalance(deployer.address);
+                  const transactionResponse = await fundMe.cheaperWithdraw();
+                  const transactionReceipt = await transactionResponse.wait(1);
 
-            assert.equal(endingFundMeBalance.toString(), "0");
-            assert.equal(startingDeployerBalance.add(startingFundMeBalance).toString(), endingDeployerBalance.add(gasCost).toString());
+                  const { gasUsed, effectiveGasPrice } = transactionReceipt;
+                  const gasCost = gasUsed.mul(effectiveGasPrice);
 
-            //Make sure the funders are reset properly
-            await expect(fundMe.s_funders(0)).to.be.reverted;
+                  const endingFundMeBalance = await fundMe.provider.getBalance(fundMe.address);
+                  const endingDeployerBalance = await fundMe.provider.getBalance(deployer.address);
 
-            for (let index = 1; index < 6; index++) {
-                const funderBalance = await fundMe.s_addressToAmountFunded(accounts[index].address);
-                assert.equal(funderBalance.toString(), "0");
-            }
-        });
+                  assert.equal(endingFundMeBalance.toString(), "0");
+                  assert.equal(startingDeployerBalance.add(startingFundMeBalance).toString(), endingDeployerBalance.add(gasCost).toString());
 
-        it("Only allows the owner to withdraw", async () => {
-            const accounts = await ethers.getSigners();
-            const attacker = accounts[1];
-            const attackerConnectedContract = await fundMe.connect(attacker);
+                  //Make sure the funders are reset properly
+                  await expect(fundMe.getFunder(0)).to.be.reverted;
 
-            await expect(attackerConnectedContract.withdraw()).to.be.revertedWith("FundMe__NotOwner");
-        });
-    });
-});
+                  for (let index = 1; index < 6; index++) {
+                      const funderBalance = await fundMe.getAddressToAmountFunded(accounts[index].address);
+                      assert.equal(funderBalance.toString(), "0");
+                  }
+              });
+
+              it("Only allows the owner to withdraw", async () => {
+                  const accounts = await ethers.getSigners();
+                  const attacker = accounts[1];
+                  const attackerConnectedContract = await fundMe.connect(attacker);
+
+                  await expect(attackerConnectedContract.withdraw()).to.be.revertedWith("FundMe__NotOwner");
+              });
+          });
+      });
