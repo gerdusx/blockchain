@@ -24,3 +24,5 @@ coverage
 coverage.json
 typechain
 typechain-types
+
+slither-results.json
