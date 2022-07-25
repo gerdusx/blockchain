@@ -36,7 +36,7 @@ const config: HardhatUserConfig = {
         rinkeby: {
             url: RINKEBY_RPC_URL,
             accounts: PRIVATE_KEY !== undefined ? [PRIVATE_KEY] : [],
-            chainId: 4
+            chainId: 4,
         },
     },
     gasReporter: {
